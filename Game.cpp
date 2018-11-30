@@ -28,8 +28,8 @@ using Microsoft::WRL::ComPtr;
 
 Game::Game()
 {
-    m_deviceResources = std::make_unique<DX::DeviceResources>();
-    m_deviceResources->RegisterDeviceNotify(this);
+    DXDevice::GetInstance().GetDeviceResources = std::make_unique<DX::DeviceResources>();
+    DXDevice::GetInstance().GetDeviceResources->RegisterDeviceNotify(this);
 }
 
 // Initialize the Direct3D resources required to run.
@@ -48,12 +48,12 @@ void Game::Initialize(HWND window, int width, int height)
 	// デバッグカメラの作成
 	m_debugCamera = std::make_unique<DebugCamera>(width, height);
 
-    m_deviceResources->SetWindow(window, width, height);
+	DXDevice::GetInstance().GetDeviceResources->SetWindow(window, width, height);
 
-    m_deviceResources->CreateDeviceResources();
+	DXDevice::GetInstance().GetDeviceResources->CreateDeviceResources();
     CreateDeviceDependentResources();
 
-    m_deviceResources->CreateWindowSizeDependentResources();
+   DXDevice::GetInstance().GetDeviceResources->CreateWindowSizeDependentResources();
     CreateWindowSizeDependentResources();
 
 	m_font = std::make_unique<SpriteFont>(DXDevice::GetInstance().GetDevice(), L"SegoeUI_18.spritefont");
@@ -92,121 +92,121 @@ void Game::Update(DX::StepTimer const& timer)
 
 
 
-	auto kb = Keyboard::Get().GetState();
-	
+	//auto kb = Keyboard::Get().GetState();
+	//
 
-	m_keyTracker->Update(kb);
-	// 各アップデート関数の呼び出し
-	m_ball->SetKeyTraker(m_keyTracker.get());
-
-
-
-
-	if (kb.Up)
-	{
-		m_ball->Move(Ball::FORWARD);
-	}
-	if (kb.Down)
-	{
-		m_ball->Move(Ball::BACK);
-	}
-	if (kb.Left)
-	{
-		m_ball->Move(Ball::TURN_LEFT);
-	}
-	if (kb.Right)
-	{
-		m_ball->Move(Ball::TURN_RIGHT);
-	}
+	//m_keyTracker->Update(kb);
+	//// 各アップデート関数の呼び出し
+	//m_ball->SetKeyTraker(m_keyTracker.get());
 
 
 
-	// デバッグカメラの更新
-	m_debugCamera->Update();
 
-	// セット関数の更新
-	Vector3 cross;
-
-	if (FloorCol(m_ball->GetPosition(), cross))
-	{
-		// 地面と当たったときジャンプを終了
-		m_ball->EndJamp();
-		m_ball->SetPosition(cross);
-	}
-
-	for (std::vector<std::unique_ptr<Enemy>>::iterator ite = m_enemyEye.begin();
-		ite != m_enemyEye.end(); )
-	{
-		FloorCol((*ite)->GetPosition(), cross);
-		(*ite)->SetPosition(cross);
-		(*ite)->Update(elapsedTime);
-
-		CollitionSphere c;
-
-		// ジャンプで敵を消す判定と処理
-		if (c.HitCheck(m_ball.get(), (*ite).get()) 
-			&& m_ball->GetJumpFlag() 
-			&& m_ball->GetSpeed().y <= 0.0f)
-		{
-			// 敵の死ぬ判定関数
-			(*ite)->DeathState();
-
-			if (ite == m_enemyEye.end())
-			{
-				break;
-			}
-		}
-
-		if ((*ite)->GetScale().y <= 0.1f)
-		{
-			// 敵を消す処理
-			(*ite).release();
-			ite = m_enemyEye.erase(ite);
-		}
-		else
-		{
-			ite++;
-		}
-	}
-
-	// 作るときはこんなん
-	/*m_enemyEye.push_back(std::unique_ptr<Enemy>());
-
-	(*(m_enemyEye.end()--)) = std::make_unique<Enemy>();*/
-
-
-	// カメラを後ろに設定する
-	Vector3 vec(0.0f, 6.0f, 10.0f);
-	Matrix rotY = Matrix::CreateRotationY(m_ball->GetDirection());
-	vec = Vector3::Transform(vec, rotY);
-	Vector3 target = m_player->GetPosition();
-	Vector3 eye = target + vec;
-	m_camera.SetPositionTarget(eye, target);
-
-	m_ball->Update(elapsedTime);
-	m_player->SetPosition(Vector3(m_ball->GetPosition().x, m_ball->GetPosition().y + 0.5, m_ball->GetPosition().z));
-
-	m_player->Update(elapsedTime);
-	
-
-	// 最終の更新処理
-	m_ball->LastUpdate(elapsedTime,m_ball.get());
-
-
-	//int id;
-	//Vector3 s;
-	//Vector3 ballPos = m_ball->GetPosition();
-	//Vector3 v[2] = { Vector3(ballPos.x,100.0f,ballPos.z),Vector3(ballPos.x,-100.0f,ballPos.z) };
-
-	//if (m_floor->HitCheck_Segment(v[0], v[1], &id, &s) == true)
+	//if (kb.Up)
 	//{
-	//	s.y += 1.0f;
-
-	//	m_ball->SetPosition(s);
+	//	m_ball->Move(Ball::FORWARD);
+	//}
+	//if (kb.Down)
+	//{
+	//	m_ball->Move(Ball::BACK);
+	//}
+	//if (kb.Left)
+	//{
+	//	m_ball->Move(Ball::TURN_LEFT);
+	//}
+	//if (kb.Right)
+	//{
+	//	m_ball->Move(Ball::TURN_RIGHT);
 	//}
 
-	
-	
+
+
+	//// デバッグカメラの更新
+	//m_debugCamera->Update();
+
+	//// セット関数の更新
+	//Vector3 cross;
+
+	//if (FloorCol(m_ball->GetPosition(), cross))
+	//{
+	//	// 地面と当たったときジャンプを終了
+	//	m_ball->EndJamp();
+	//	m_ball->SetPosition(cross);
+	//}
+
+	//for (std::vector<std::unique_ptr<Enemy>>::iterator ite = m_enemyEye.begin();
+	//	ite != m_enemyEye.end(); )
+	//{
+	//	FloorCol((*ite)->GetPosition(), cross);
+	//	(*ite)->SetPosition(cross);
+	//	(*ite)->Update(elapsedTime);
+
+	//	CollitionSphere c;
+
+	//	// ジャンプで敵を消す判定と処理
+	//	if (c.HitCheck(m_ball.get(), (*ite).get()) 
+	//		&& m_ball->GetJumpFlag() 
+	//		&& m_ball->GetSpeed().y <= 0.0f)
+	//	{
+	//		// 敵の死ぬ判定関数
+	//		(*ite)->DeathState();
+
+	//		if (ite == m_enemyEye.end())
+	//		{
+	//			break;
+	//		}
+	//	}
+
+	//	if ((*ite)->GetScale().y <= 0.1f)
+	//	{
+	//		// 敵を消す処理
+	//		(*ite).release();
+	//		ite = m_enemyEye.erase(ite);
+	//	}
+	//	else
+	//	{
+	//		ite++;
+	//	}
+	//}
+
+	//// 作るときはこんなん
+	///*m_enemyEye.push_back(std::unique_ptr<Enemy>());
+
+	//(*(m_enemyEye.end()--)) = std::make_unique<Enemy>();*/
+
+
+	//// カメラを後ろに設定する
+	//Vector3 vec(0.0f, 6.0f, 10.0f);
+	//Matrix rotY = Matrix::CreateRotationY(m_ball->GetDirection());
+	//vec = Vector3::Transform(vec, rotY);
+	//Vector3 target = m_player->GetPosition();
+	//Vector3 eye = target + vec;
+	//m_camera.SetPositionTarget(eye, target);
+
+	//m_ball->Update(elapsedTime);
+	//m_player->SetPosition(Vector3(m_ball->GetPosition().x, m_ball->GetPosition().y + 0.5, m_ball->GetPosition().z));
+
+	//m_player->Update(elapsedTime);
+	//
+
+	//// 最終の更新処理
+	//m_ball->LastUpdate(elapsedTime,m_ball.get());
+
+
+	////int id;
+	////Vector3 s;
+	////Vector3 ballPos = m_ball->GetPosition();
+	////Vector3 v[2] = { Vector3(ballPos.x,100.0f,ballPos.z),Vector3(ballPos.x,-100.0f,ballPos.z) };
+
+	////if (m_floor->HitCheck_Segment(v[0], v[1], &id, &s) == true)
+	////{
+	////	s.y += 1.0f;
+
+	////	m_ball->SetPosition(s);
+	////}
+
+	//
+	//
 	
 
 }
@@ -224,86 +224,91 @@ void Game::Render()
 
 	Clear();
 
-	m_deviceResources->PIXBeginEvent(L"Render");
-	auto context = m_deviceResources->GetD3DDeviceContext();
+	DXDevice::GetInstance().GetDeviceResources->PIXBeginEvent(L"Render");
+
+	/// <summary>
+	/// シーン更新
+	/// </summary>
+
+	//auto context =DXDevice::GetInstance().GetDeviceResources->GetD3DDeviceContext();
 
 
 
-	// ビュー行列の作成
-	m_view = Matrix::CreateLookAt(m_camera.GetEyePosition(), m_camera.GetTargetPosition(), Vector3::Up);
+	//// ビュー行列の作成
+	//m_view = Matrix::CreateLookAt(m_camera.GetEyePosition(), m_camera.GetTargetPosition(), Vector3::Up);
 
-	// グリッドの床の描画
+	//// グリッドの床の描画
 
-	// 床の描画
-	m_floor->DrawCollision(context,m_view,m_projection);
+	//// 床の描画
+	//m_floor->DrawCollision(context,m_view,m_projection);
 
-	// ここから描画処理を記述する
+	//// ここから描画処理を記述する
 
-	// 各レンダー関数の呼び出し
-	m_ball->Render();
-	m_player->Render();
-	for (std::vector<std::unique_ptr<Enemy>>::iterator ite = m_enemyEye.begin();
-		ite != m_enemyEye.end();
-		ite++)
-	{
-		(*ite)->Render();
-
-	}	
-	m_floorModel->Draw(context, *m_states, m_world, m_view, m_projection);
-
-	//// 当たり判定
-	wchar_t* dtext;
-	//std::wstring output = std::to_wstring(m_ball->GetPosition().y);
-
-	//CollitionSphere c;
-	//if (c.HitCheck(m_ball.get(),m_enemyEye.get()))
+	//// 各レンダー関数の呼び出し
+	//m_ball->Render();
+	//m_player->Render();
+	//for (std::vector<std::unique_ptr<Enemy>>::iterator ite = m_enemyEye.begin();
+	//	ite != m_enemyEye.end();
+	//	ite++)
 	//{
+	//	(*ite)->Render();
+
+	//}	
+	//m_floorModel->Draw(context, *m_states, m_world, m_view, m_projection);
+
+	////// 当たり判定
+	//wchar_t* dtext;
+	////std::wstring output = std::to_wstring(m_ball->GetPosition().y);
+
+	////CollitionSphere c;
+	////if (c.HitCheck(m_ball.get(),m_enemyEye.get()))
+	////{
+	////	dtext = L"debug true";
+	////}
+	////else
+	////{
+	//	dtext = L"debug false";
+	////}
+
+	//
+	//	m_sprites->Begin();
+	//	m_font->DrawString(m_sprites.get(), dtext, Vector2(10, 10), Colors::White, 0.0f, Vector2(0, 0));
+	//	m_sprites->End();
+
 	//	dtext = L"debug true";
-	//}
-	//else
-	//{
-		dtext = L"debug false";
-	//}
 
-	
-		m_sprites->Begin();
-		m_font->DrawString(m_sprites.get(), dtext, Vector2(10, 10), Colors::White, 0.0f, Vector2(0, 0));
-		m_sprites->End();
-
-		dtext = L"debug true";
-
-		m_sprites->Begin();
-		m_font->DrawString(m_sprites.get(), dtext, Vector2(100, 100), Colors::White, 0.0f, Vector2(0, 0));
-		m_sprites->End();
+	//	m_sprites->Begin();
+	//	m_font->DrawString(m_sprites.get(), dtext, Vector2(100, 100), Colors::White, 0.0f, Vector2(0, 0));
+	//	m_sprites->End();
 
 
 	// ここまで
 
-    m_deviceResources->PIXEndEvent();
+   DXDevice::GetInstance().GetDeviceResources->PIXEndEvent();
 
     // Show the new frame.
-    m_deviceResources->Present();
+   DXDevice::GetInstance().GetDeviceResources->Present();
 }
 
 // Helper method to clear the back buffers.
 void Game::Clear()
 {
-    m_deviceResources->PIXBeginEvent(L"Clear");
+   DXDevice::GetInstance().GetDeviceResources->PIXBeginEvent(L"Clear");
 
     // Clear the views.
-    auto context = m_deviceResources->GetD3DDeviceContext();
-    auto renderTarget = m_deviceResources->GetRenderTargetView();
-    auto depthStencil = m_deviceResources->GetDepthStencilView();
+    auto context =DXDevice::GetInstance().GetDeviceResources->GetD3DDeviceContext();
+    auto renderTarget =DXDevice::GetInstance().GetDeviceResources->GetRenderTargetView();
+    auto depthStencil =DXDevice::GetInstance().GetDeviceResources->GetDepthStencilView();
 
     context->ClearRenderTargetView(renderTarget, Colors::DarkBlue);
     context->ClearDepthStencilView(depthStencil, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
     context->OMSetRenderTargets(1, &renderTarget, depthStencil);
 
     // Set the viewport.
-    auto viewport = m_deviceResources->GetScreenViewport();
+    auto viewport =DXDevice::GetInstance().GetDeviceResources->GetScreenViewport();
     context->RSSetViewports(1, &viewport);
 
-    m_deviceResources->PIXEndEvent();
+   DXDevice::GetInstance().GetDeviceResources->PIXEndEvent();
 }
 #pragma endregion
 
@@ -355,8 +360,8 @@ void Game::GetDefaultSize(int& width, int& height) const
 void Game::CreateDeviceDependentResources()
 {
 	// デバイスの作成
-    ID3D11Device* device = m_deviceResources->GetD3DDevice();
-	ID3D11DeviceContext* context = m_deviceResources->GetD3DDeviceContext();
+    ID3D11Device* device =DXDevice::GetInstance().GetDeviceResources->GetD3DDevice();
+	ID3D11DeviceContext* context =DXDevice::GetInstance().GetDeviceResources->GetD3DDeviceContext();
 
 	// コモンステートの作成
 	m_states = std::make_unique<CommonStates>(device);
@@ -417,7 +422,7 @@ void Game::CreateWindowSizeDependentResources()
     // TODO: Initialize windows-size dependent objects here.
 
 	// ウインドウサイズからアスペクト比を算出する
-	RECT size = m_deviceResources->GetOutputSize();
+	RECT size =DXDevice::GetInstance().GetDeviceResources->GetOutputSize();
 	float aspectRatio = float(size.right) / float(size.bottom);
 
 	// 画角を設定
